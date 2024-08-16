@@ -4,11 +4,11 @@ import { FaHome, FaWallet, FaList, FaTags } from 'react-icons/fa';
 
 const Sidebar = () => {
   return (
-    <div className="h-screen bg-blue-800 text-white w-64 py-8 px-6">
+    <div className="flex flex-col h-screen bg-blue-800 text-white w-64 py-8 px-6">
       <div className="text-center mb-10">
         <h2 className="text-2xl font-bold">Expense Tracker</h2>
       </div>
-      <nav className="flex flex-col gap-6">
+      <nav className="flex flex-col gap-6 flex-grow">
         <NavLink
           to="/dashboard"
           className="flex items-center gap-4 text-lg hover:bg-blue-700 p-3 rounded-lg transition-colors"
