@@ -1,17 +1,38 @@
 import React, { useState } from 'react';
-import FormInput from '../components/FormInput';
-// import img from "../assets/login2.jpg";
+import { useNavigate, Link } from 'react-router-dom';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
+import img from "../assets/auth.jpg";
 
 const Register = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // Tambahkan logika untuk handle register API di sini
-    console.log('Register clicked', { name, email, password, confirmPassword });
+
+    if (password !== confirmPassword) {
+      toast.error('Password dan konfirmasi password tidak cocok.');
+      return;
+    }
+
+    try {
+      const response = await axios.post('https://msib-6-test-7uaujedvyq-et.a.run.app/api/register', {
+        name,
+        email,
+        password,
+        password_confirmation: confirmPassword
+      });
+
+      toast.success('Registrasi berhasil! Silakan login.');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Terjadi kesalahan saat registrasi.');
+    }
   };
 
   return (
@@ -21,33 +42,41 @@ const Register = () => {
           <h2 className="font-bold text-2xl">Register</h2>
           <p className="text-xs mt-4">Daftarkan akun Anda</p>
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
-            <FormInput
-              label="Name"
+            <input
+              className="p-3 mt-8 rounded-3xl border shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
               type="text"
+              name="name"
+              placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
+              required
             />
-            <FormInput
-              label="Email"
+            <input
+              className="p-3 rounded-3xl border shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
               type="email"
+              name="email"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email"
+              required
             />
-            <FormInput
-              label="Password"
+            <input
+              className="p-3 rounded-3xl border shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
               type="password"
+              name="password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
+              required
             />
-            <FormInput
-              label="Confirm Password"
+            <input
+              className="p-3 rounded-3xl border shadow-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-300"
               type="password"
+              name="confirmPassword"
+              placeholder="Confirm Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm Password"
+              required
             />
             <button
               type="submit"
@@ -56,13 +85,20 @@ const Register = () => {
               Register
             </button>
           </form>
+          <p className="text-sm mt-4">
+            Sudah punya akun?{' '}
+            <Link to="/login" className="text-blue-500 hover:underline">
+              Login di sini
+            </Link>
+          </p>
         </div>
         <div className="md:block hidden w-1/2">
-          <img className="rounded-2xl" src="https://id.pinterest.com/pin/703756186861225/" alt="Register" />
+          <img className="rounded-2xl" src={img} alt="Register" />
         </div>
       </div>
+      <ToastContainer />
     </section>
   );
 };
 
-export default Register;
+export default Register
