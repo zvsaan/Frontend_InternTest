@@ -6,12 +6,11 @@ const Header = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Hapus autentikasi dari localStorage
-    localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('token');
     localStorage.removeItem('email');
 
     navigate('/login');
+    window.location.reload();
   };
 
   const toggleDropdown = () => {
@@ -23,7 +22,6 @@ const Header = () => {
       <h1 className="text-2xl font-bold text-blue-800">Dashboard</h1>
       
       <div className="relative">
-        {/* Foto Profil (Lingkaran) */}
         <button onClick={toggleDropdown} className="focus:outline-none">
           <img
             src="https://filestore.community.support.microsoft.com/api/images/0ce956b2-9787-4756-a580-299568810730?upload=true"

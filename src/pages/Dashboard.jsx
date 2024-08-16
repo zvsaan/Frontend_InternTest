@@ -10,7 +10,6 @@ const Dashboard = () => {
         <Header />
         <main className="flex-grow p-6 bg-gray-100">
           <h2 className="text-xl font-semibold mb-4">Ringkasan Keuangan</h2>
-          {/* Di sini akan ada komponen ringkasan nanti */}
         </main>
       </div>
     </div>

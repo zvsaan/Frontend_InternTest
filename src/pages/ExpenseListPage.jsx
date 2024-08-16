@@ -10,11 +10,13 @@ const ExpenseListPage = () => {
   const [isDeletePopupOpen, setIsDeletePopupOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [notification, setNotification] = useState({ message: '', type: '' });
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
+  const [newExpense, setNewExpense] = useState({ name: '', category_id: '', amount: '', wallet_id: '', time: '' });
+  
+  // Pagination and Filters
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('');
 
-  // Fetch expenses, categories, and wallets from the API
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -36,54 +38,58 @@ const ExpenseListPage = () => {
   }, []);
 
   // Fungsi untuk menambah expense (POST)
-  const handleAddExpense = async (expense) => {
+  const handleAddExpense = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.post(`https://msib-6-test-7uaujedvyq-et.a.run.app/api/wallet/${expense.wallet_id}/expense`, expense, {
+      const formattedAmount = parseFloat(newExpense.amount).toFixed(2);
+      const response = await axios.post(`https://msib-6-test-7uaujedvyq-et.a.run.app/api/wallet/${newExpense.wallet_id}/expense`, {
+        ...newExpense,
+        amount: formattedAmount, // Format amount dengan 2 desimal
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setExpenses([...expenses, response.data.expense]);
       setNotification({ message: 'Catatan berhasil ditambahkan', type: 'success' });
+      setIsPopupOpen(false);
+      setNewExpense({ name: '', category_id: '', amount: '', wallet_id: '', time: '' });
     } catch (error) {
       console.error('Error adding expense:', error.response?.data || error.message);
       setNotification({ message: 'Gagal menambah catatan', type: 'error' });
-    } finally {
-      setIsPopupOpen(false);
     }
   };
 
-  // Fungsi untuk mengedit expense (PUT)
-  const handleEditExpense = async (expense) => {
+  const handleEditExpense = async () => {
     const token = localStorage.getItem('token');
     try {
-      await axios.put(`https://msib-6-test-7uaujedvyq-et.a.run.app/api/expense/${selectedExpense.id}`, expense, {
+      const formattedAmount = parseFloat(selectedExpense.amount).toFixed(2);
+      await axios.put(`https://msib-6-test-7uaujedvyq-et.a.run.app/api/expense/${selectedExpense.id}`, {
+        ...selectedExpense,
+        amount: formattedAmount, // Format amount dengan 2 desimal
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setExpenses(expenses.map((exp) => (exp.id === selectedExpense.id ? { ...exp, ...expense } : exp)));
+      setExpenses(expenses.map((exp) => (exp.id === selectedExpense.id ? { ...exp, ...selectedExpense } : exp)));
       setNotification({ message: 'Catatan berhasil diperbarui', type: 'success' });
+      setIsPopupOpen(false);
+      setSelectedExpense(null);
     } catch (error) {
       console.error('Error editing expense:', error.response?.data || error.message);
       setNotification({ message: 'Gagal menyimpan catatan', type: 'error' });
-    } finally {
-      setIsPopupOpen(false);
-      setSelectedExpense(null);
     }
   };
 
-  // Fungsi untuk menghapus expense
-  const handleDeleteExpense = async (id) => {
+  const handleDeleteExpense = async () => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`https://msib-6-test-7uaujedvyq-et.a.run.app/api/expense/${id}`, {
+      await axios.delete(`https://msib-6-test-7uaujedvyq-et.a.run.app/api/expense/${selectedExpense.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setExpenses(expenses.filter((exp) => exp.id !== id));
+      setExpenses(expenses.filter((exp) => exp.id !== selectedExpense.id));
       setNotification({ message: 'Catatan berhasil dihapus', type: 'success' });
+      setIsDeletePopupOpen(false);
     } catch (error) {
       console.error('Error deleting expense:', error.response?.data || error.message);
       setNotification({ message: 'Gagal menghapus catatan', type: 'error' });
-    } finally {
-      setIsDeletePopupOpen(false);
     }
   };
 
@@ -102,6 +108,7 @@ const ExpenseListPage = () => {
   });
 
   const paginatedExpenses = filteredExpenses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
 
   return (
     <Layout>
@@ -112,7 +119,6 @@ const ExpenseListPage = () => {
         </button>
       </div>
 
-      {/* Filter and Items Per Page */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <label className="mr-2">Filter Kategori:</label>
@@ -144,7 +150,6 @@ const ExpenseListPage = () => {
         </div>
       </div>
 
-      {/* Tabel Pengeluaran */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border rounded-lg shadow-lg">
           <thead>
@@ -183,7 +188,6 @@ const ExpenseListPage = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <span>
           Menampilkan {Math.min((currentPage - 1) * itemsPerPage + 1, filteredExpenses.length)}-
@@ -198,16 +202,15 @@ const ExpenseListPage = () => {
             Sebelumnya
           </button>
           <button
-            className={`px-4 py-2 ${currentPage * itemsPerPage >= filteredExpenses.length ? 'bg-gray-300' : 'bg-blue-500 text-white'} rounded`}
+            className={`px-4 py-2 ${currentPage === totalPages ? 'bg-gray-300' : 'bg-blue-500 text-white'} rounded`}
             onClick={() => setCurrentPage(currentPage + 1)}
-            disabled={currentPage * itemsPerPage >= filteredExpenses.length}
+            disabled={currentPage === totalPages}
           >
             Berikutnya
           </button>
         </div>
       </div>
 
-      {/* Popup for adding/editing expense */}
       {isPopupOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -215,20 +218,20 @@ const ExpenseListPage = () => {
             <input
               className="w-full p-2 mb-4 border rounded"
               placeholder="Nama Transaksi"
-              value={selectedExpense?.name || ''}
-              onChange={(e) => setSelectedExpense({ ...selectedExpense, name: e.target.value })}
+              value={selectedExpense ? selectedExpense.name : newExpense.name}
+              onChange={(e) => selectedExpense ? setSelectedExpense({ ...selectedExpense, name: e.target.value }) : setNewExpense({ ...newExpense, name: e.target.value })}
             />
             <input
               className="w-full p-2 mb-4 border rounded"
               type="number"
               placeholder="Jumlah"
-              value={selectedExpense?.amount || ''}
-              onChange={(e) => setSelectedExpense({ ...selectedExpense, amount: e.target.value })}
+              value={selectedExpense ? selectedExpense.amount : newExpense.amount}
+              onChange={(e) => selectedExpense ? setSelectedExpense({ ...selectedExpense, amount: e.target.value }) : setNewExpense({ ...newExpense, amount: e.target.value })}
             />
             <select
               className="w-full p-2 mb-4 border rounded"
-              value={selectedExpense?.category_id || ''}
-              onChange={(e) => setSelectedExpense({ ...selectedExpense, category_id: e.target.value })}
+              value={selectedExpense ? selectedExpense.category_id : newExpense.category_id}
+              onChange={(e) => selectedExpense ? setSelectedExpense({ ...selectedExpense, category_id: e.target.value }) : setNewExpense({ ...newExpense, category_id: e.target.value })}
             >
               <option value="">Pilih Kategori</option>
               {categories.map((category) => (
@@ -237,14 +240,20 @@ const ExpenseListPage = () => {
             </select>
             <select
               className="w-full p-2 mb-4 border rounded"
-              value={selectedExpense?.wallet_id || ''}
-              onChange={(e) => setSelectedExpense({ ...selectedExpense, wallet_id: e.target.value })}
+              value={selectedExpense ? selectedExpense.wallet_id : newExpense.wallet_id}
+              onChange={(e) => selectedExpense ? setSelectedExpense({ ...selectedExpense, wallet_id: e.target.value }) : setNewExpense({ ...newExpense, wallet_id: e.target.value })}
             >
               <option value="">Pilih Dompet</option>
               {wallets.map((wallet) => (
                 <option key={wallet.id} value={wallet.id}>{wallet.name}</option>
               ))}
             </select>
+            <input
+              className="w-full p-2 mb-4 border rounded"
+              type="datetime-local"
+              value={selectedExpense ? selectedExpense.time : newExpense.time}
+              onChange={(e) => selectedExpense ? setSelectedExpense({ ...selectedExpense, time: e.target.value }) : setNewExpense({ ...newExpense, time: e.target.value })}
+            />
             <div className="flex justify-end gap-4">
               <button
                 onClick={() => { setIsPopupOpen(false); setSelectedExpense(null); }}
@@ -252,7 +261,7 @@ const ExpenseListPage = () => {
               >
                 Batal
               </button>
-              <button onClick={() => selectedExpense ? handleEditExpense(selectedExpense) : handleAddExpense(selectedExpense)} className="bg-blue-500 text-white px-4 py-2 rounded">
+              <button onClick={selectedExpense ? handleEditExpense : handleAddExpense} className="bg-blue-500 text-white px-4 py-2 rounded">
                 Simpan
               </button>
             </div>
@@ -274,7 +283,7 @@ const ExpenseListPage = () => {
                 Batal
               </button>
               <button
-                onClick={() => handleDeleteExpense(selectedExpense.id)}
+                onClick={handleDeleteExpense}
                 className="bg-red-500 text-white px-4 py-2 rounded"
               >
                 Hapus
@@ -284,7 +293,6 @@ const ExpenseListPage = () => {
         </div>
       )}
 
-      {/* Notification */}
       {notification.message && (
         <div className={`fixed top-4 right-4 bg-${notification.type === 'success' ? 'green' : 'red'}-500 text-white p-4 rounded-lg shadow-lg`}>
           <p>{notification.message}</p>
